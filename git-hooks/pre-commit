@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# A pre-commit hook that makes it illegal to commit to master
+# on the repo.  An exception is made for 'arc land', which is the preffered
+# workflow.
+#
+# For emergencies, you can override this hook by using 'git commit -n'.
+
+# 'arc' will set this ARCANIST environment variable while it runs a command
+if [ "$ARCANIST" == "land" ]; then
+    exit 0
+fi
+
+if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
+    echo "FATAL ERROR: You cannot commit directly to the master branch."
+    echo
+    echo "Commit to a feature branch instead:"
+    echo "    https://docs.calblueprint.org/dev/git-at-bp"
+    exit 1
+fi

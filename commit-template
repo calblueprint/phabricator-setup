@@ -1,0 +1,13 @@
+<one-line short summary, no longer than this text>
+
+Summary:
+<longer, detailed summary>
+
+Test Plan:
+
+Reviewers: {project_lead}
+
+Subscribers: {teammates}
+
+% Add tags below this line. Please keep your project's tag.
+#{project}
