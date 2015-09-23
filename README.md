@@ -128,9 +128,10 @@ Phabricator workflow works much better when feature branches are `rebased` onto 
 
 > Rebasing gives the illusion of a much cleaner commit history because it _rewrites_ the history of master to appear to have a perfectly linear history (i.e., no branching and then merging). This makes it much easier to track and _revert_ changes. [Here](https://www.atlassian.com/git/tutorials/merging-vs-rebasing) is a good article describing the difference. **If you're still not sure what the difference is, please ask me (Aleks). It's important that you know `merge` and `rebase` clearly so that you can teach your devs!**
 
-Devs should also use `git pull --rebase` instead of `git pull` so that new upstream changes are _rebased_ onto their local branch, as opposed to merged in. You (PL) can configure your repo to rebase on `git pull` (with no `--rebase` flag) by default by adding the following to `.git/config` in your repo:
+Devs should also use `git pull --rebase` instead of `git pull` so that new upstream changes are _rebased_ onto their local branch, as opposed to merged in. You (PL) should instruct your devs to configure their local repos to rebase on `git pull` (with no `--rebase` flag) by default: have them run the following in their local repo:
 
-    [pull]
-        rebase = true
+    git config pull.rebase true
 
-This way, no dev can accidentally spoil your ~~beautiful~~ linear history. 
+> **IMPORTANT:** Make sure your devs have git >= 2.0 installed!
+
+This way, no dev can accidentally spoil your ~~beautiful~~ linear history.
