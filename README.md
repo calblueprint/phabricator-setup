@@ -8,9 +8,9 @@ Developer Setup
 Phabricator is the web app that _hosts_ code reviews, but Arcanist (or `arc`) is the command line tool that interacts with Phab. To install `arc`, you'll need to clone the GitHub repo and add the program to your `$PATH`. We're going to accomplish this by symlinking the program to your path. (**IMPORTANT:** Ask you PL to explain this carefully if you don't know what this means!!!)
 
 In your preferred directory (e.g. `~/.webdev`), run the following:
-    
+
     git clone https://github.com/phacility/libphutil.git
-    git clone https://github.com/phacility/arcanist.git
+    git clone https://github.com/calblueprint/arcanist.git
     ln -s $(pwd)/arcanist/bin/arc /usr/local/bin/arc
 
 (This assumes `/usr/local/bin` is already in your path; it should be.) Restart your terminal. Now, when you type `arc`, you should see something like:
@@ -18,6 +18,8 @@ In your preferred directory (e.g. `~/.webdev`), run the following:
     Usage Exception: No command provided. Try 'arc help'.
 
 If you instead see something like: `bash: command not found: arc`, something went wrong.
+
+> NOTE: We use a fork of arcanist that adds ESLint as a linter (used for React apps). Shoutout to @nnarayen for implementing this.
 
 ### Step 2: Make a Phabricator account
 > **NOTE:** Make sure that you've already authenticated an `@berkeley.edu` account with your GitHub before proceeding!
@@ -42,14 +44,14 @@ Phabricator best practice is to do all your work in branches. You do no developm
 
 		git checkout -b cool-new-feature
 
-2. Make a bunch of changes, and commit them as normal: 
+2. Make a bunch of changes, and commit them as normal:
 
 		git commit
 
-3. When you're ready for a review, run: 
+3. When you're ready for a review, run:
 
 		arc diff
-	
+
 	Or, if your PL has helped you set up an alias for Reviewers/CCs, run `arc <alias>`. In either case, fill out the sections and push your diff.
 	- **Super useful:** If you'd like to preview your diff before actually submitting it for review, use `arc diff --preview` instead!
 
@@ -59,7 +61,7 @@ Phabricator best practice is to do all your work in branches. You do no developm
 5. When you are ready to push, you'll want to rebase your changes into the master branch and do a git push from master up to GitHub. (See the note below on rebasing.) You can do this in one step, which will also update your commit message with phabricator metadata: `arc land`
 	- If you want to be explicit, you can run `arc land <to-branch>`
 	- If you accidentally did your changes in master instead of a branch, run `arc amend && git push` rather than `arc land`
-	  
+
 	> **Rebasing:** Phabricator projects should be set up to `rebase` instead of `merge` by default; this should be set in your project repo's local `.gitconfig`. Rebasing gives the illusion of a much cleaner commit history. Ask your PL to clarify the difference between `merge` and `rebase`, you should become somewhat familiar with the two.
 
 If other people have committed changes that you want to incorporate into your branch (perhaps a bugfix that you need), you can just do `git pull --rebase` in your feature branch (or simply `git pull` if your repo has set up rebase by default).  Phabricator will do the right thing in ignoring these not-your changes.
@@ -119,7 +121,7 @@ For example, if `noah` is a PL for `samz`, `generic`, `qin`, and `aleks` (me), I
 
 Now, when I use `arc bpdiff`, all of my reviewers/CCs are magically set up.
 
-> 
+>
 - Consider adding `--verbatim` to your alias too. This uses your commit message as the title of the Phab diff by default, without asking first.
 - See `arc alias --help` for more details.
 
