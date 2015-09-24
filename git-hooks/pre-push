@@ -18,7 +18,7 @@ while read local_ref local_sha remote_ref remote_sha; do
         echo "FATAL ERROR: You cannot push to the master branch on github."
         echo
         echo "Instead, you must deploy a feature branch via 'arc land'."
-        echo "    https://docs.calblueprint.org/dev/git-at-bp"
+        echo "    http://docs.calblueprint.org/dev/git-at-bp"
         exit 1
     fi
 done

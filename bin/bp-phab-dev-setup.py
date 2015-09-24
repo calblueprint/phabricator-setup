@@ -54,7 +54,7 @@ def _log_failure(msg):
     logging.error('FAILURE: %s' % msg)
 
 
-def _curl_file_to_dst(file_url, dst, chmod=0644):
+def _curl_file_to_dst(file_url, dst, chmod=0o644):
     if urllib.urlopen(file_url).getcode() >= 400:
         logging.error("ERROR: couldn't find file at %s" % file_url)
         raise FileNotFoundError
@@ -75,7 +75,7 @@ def set_git_hooks(no_template):
         del GITHOOKS['prepare-commit-msg']
     try:
         for name, url in GITHOOKS.iteritems():
-            _curl_file_to_dst(url, '.git/hooks/'+name, chmod=0755)
+            _curl_file_to_dst(url, '.git/hooks/'+name, chmod=0o755)
     except FileNotFoundError:
         return _log_failure("couldn't configure git hooks")
     _log_success('git hooks configured.')
@@ -107,6 +107,8 @@ def set_commit_template():
         'git config --local commit.template .git/commit-template'.split())
     subprocess.check_call(
         'git config --local core.commentchar %'.split())
+    subprocess.check_call(
+        'arc alias vdiff diff -- --verbatim'.split())
 
     _log_success('commit template configured.')
     _log_success("be sure to modify '.git/commit-template' for your team's specifics!")

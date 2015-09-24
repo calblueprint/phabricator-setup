@@ -18,6 +18,6 @@ if [ "$2" = "message" ]; then
     echo "If you're fixing an existing diff, use the '--amend' flag."
     echo "If you plan to amend and do not want to change your message,"
     echo "use '--no-edit' as well."
-    echo "    https://docs.calblueprint.org/dev/git-at-bp"
+    echo "    http://docs.calblueprint.org/dev/git-at-bp"
     exit 1
 fi

@@ -33,12 +33,28 @@ In your project directory (which your PL should have already configured to work 
 
 This should print a URL to your terminal. Follow the link, copy the code given, and paste it back in your terminal.
 
-### Step 4: Voila!
+### Step 4: Configure local repo git conventions
+Luckily, this step is automated. Copy/paste the following into your terminal to curl and run an automated script that will set up your repo with some goodies that should streamline your workflow:
+
+	curl https://raw.githubusercontent.com/calblueprint/phabricator-setup/master/bin/bp-phab-dev-setup.py > bp-phab-dev-setup.py && python bp-phab-dev-setup.py && (yes | rm -f bp-phab-dev-setup.py)
+
+This script does the following automagically:
+
+- Configures a git hook on `pre-commit`, which disables committing to master.
+- Configures a git hook on `pre-push`, which disables pushing to master.
+- Sets up a custom commit message template which defaults to adding your PL and teammates as Reviewer and CCs, respectively.
+- Configures a git hook on `prepare-commit-msg` to disable committing with `-m`, in order for git to pick up the aforementioned commit template.
+- Sets up your repo to automatically `rebase` on `git pull`.
+- Configures `arc vdiff`, an alias for `arc diff --verbatim`.
+- Minor: Changes the comment character in commit messages from `#` to `%`.
+
+### Step 5: Voila!
 You should be configured to push diffs for code review onto Phabricator, yay! Read the next section to get a feel for the Phabricator workflow.
 
 Developer Workflow
 ----
 Phabricator best practice is to do all your work in branches. You do no development in the master branch; that is just a staging branch to push upstream (to GitHub).
+Some of these rules are stricly enforced by the above configuration you did on your local repo.
 
 1. When you want to start work on a new feature or change, create a local branch:
 
@@ -50,19 +66,20 @@ Phabricator best practice is to do all your work in branches. You do no developm
 
 3. When you're ready for a review, run:
 
-		arc diff
+		arc vdiff
 
-	Or, if your PL has helped you set up an alias for Reviewers/CCs, run `arc <alias>`. In either case, fill out the sections and push your diff.
+	The aforementioned automated script should have set up this arc alias for you. We use `arc vdiff` instead of `arc diff` because we want to explicitly keep the format of our commit template.
 	- **Super useful:** If you'd like to preview your diff before actually submitting it for review, use `arc diff --preview` instead!
 
-4. Often, your PL will give you feedback on your review that will prompt you to make changes before you can push to master.  Make the changes/fixes as normal in your branch, and then commit them when your done.  Then, run `arc diff` (or use your alias). Your editor should open up with a message indicating that your are making a revision to an _existing_ Phab diff.
-	> If you need to force arc to assign the new commits to the correct Phab revision ID, use `arc diff --update <revision id>`
+4. Often, your PL will give you feedback on your review that will prompt you to make changes before you can push to master.  Make the changes/fixes as normal in your branch, and then use `git commit --amend` to amend your previous git commit. (This is normally bad GitHub practice, but becomes very useful and actually preferred when using Phabricator.)  Then, run `arc diff` (this time _without_ the `verbatim`). Your editor should open up with a message indicating that your are making a revision to an _existing_ Phab diff.
+	>
+	- If you need to force `arc` to assign the new commits to the correct Phab revision ID, use `arc diff --update <revision id>`
+	- If you don't need to change your commit message on amend, you can use the `--no-edit` flag to skip editing it.
 
-5. When you are ready to push, you'll want to rebase your changes into the master branch and do a git push from master up to GitHub. (See the note below on rebasing.) You can do this in one step, which will also update your commit message with phabricator metadata: `arc land`
+5. When you are ready to push, you'll want to rebase your changes into the master branch and do a git push from master up to GitHub. (See the note below on rebasing.) You can do this in one step, which will also update your commit message with Phabricator metadata: `arc land`
 	- If you want to be explicit, you can run `arc land <to-branch>`
-	- If you accidentally did your changes in master instead of a branch, run `arc amend && git push` rather than `arc land`
 
-	> **Rebasing:** Phabricator projects should be set up to `rebase` instead of `merge` by default; this should be set in your project repo's local `.gitconfig`. Rebasing gives the illusion of a much cleaner commit history. Ask your PL to clarify the difference between `merge` and `rebase`, you should become somewhat familiar with the two.
+	> **Rebasing:** Phabricator projects should be set up to `rebase` instead of `merge` by default; this should have been set up by the aforemention automated script. Rebasing gives the illusion of a much cleaner commit history. Ask your PL to clarify the difference between `merge` and `rebase`, you should become somewhat familiar with the two.
 
 If other people have committed changes that you want to incorporate into your branch (perhaps a bugfix that you need), you can just do `git pull --rebase` in your feature branch (or simply `git pull` if your repo has set up rebase by default).  Phabricator will do the right thing in ignoring these not-your changes.
 
@@ -73,16 +90,16 @@ See the Phabricator authors' workflow for more in-depth, detailed info [here](ht
 	git checkout -b <feature branch>
 	<edit edit edit>
 	git commit
-	arc diff
+	arc vdiff
 
 	<edit based on review feedback>
 	git commit
-	arc diff
+	arc vdiff
 
 	<maybe run git pull if you want some updates>
 	<edit + commit + arc diff some more>
 
-	arc land master
+	arc land
 
 (PLs) Project Setup
 ----
@@ -108,32 +125,16 @@ After setting up the `.arcconfig` correctly, run the following:
 
 This should print a URL to your terminal. Follow the link, copy the code given, and paste it back in your terminal.
 
-### Step 3: ???
-### Step 4: Profit!
+### Step 4: Configure local repo git conventions
+See Step 4 of the Developer setup.
+
+### Step 5: ???
+### Step 6: Profit!
 Prepare to enter code-review ~~hell~~ heaven!
 
-### Step 5 (Highly Recommended): `arc alias`
-Chances are, your devs are _always_ going to be 1) adding you (PL) as the main Reviewer, 2) adding all the other devs as CCs. You should help your devs set up `arc diff` aliases to automagically set up these defaults.
+**IMPORTANT:**
 
-For example, if `noah` is a PL for `samz`, `generic`, `qin`, and `aleks` (me), I would add the following alias:
-
-	arc alias bpdiff diff -- --reviewers noah --cc samz,generic,qin
-
-Now, when I use `arc bpdiff`, all of my reviewers/CCs are magically set up.
-
->
-- Consider adding `--verbatim` to your alias too. This uses your commit message as the title of the Phab diff by default, without asking first.
-- See `arc alias --help` for more details.
-
-### Step 6 (Highly Recommended): `rebase` by default
-Phabricator workflow works much better when feature branches are `rebased` onto master rather than `merged`. In fact, running `arc land` from a feature branch will actually rebase that branch onto master (among other fancy things).
-
-> Rebasing gives the illusion of a much cleaner commit history because it _rewrites_ the history of master to appear to have a perfectly linear history (i.e., no branching and then merging). This makes it much easier to track and _revert_ changes. [Here](https://www.atlassian.com/git/tutorials/merging-vs-rebasing) is a good article describing the difference. **If you're still not sure what the difference is, please ask me (Aleks). It's important that you know `merge` and `rebase` clearly so that you can teach your devs!**
-
-Devs should also use `git pull --rebase` instead of `git pull` so that new upstream changes are _rebased_ onto their local branch, as opposed to merged in. You (PL) should instruct your devs to configure their local repos to rebase on `git pull` (with no `--rebase` flag) by default: have them run the following in their local repo:
-
-    git config pull.rebase true
-
-> **IMPORTANT:** Make sure your devs have git >= 2.0 installed!
+- Make sure your devs have git >= 2.0 installed!
+- Make _absolute_ sure that all of your devs have curled and run the automated set-up script we've provided. There could be serious confusion otherwise.
 
 This way, no dev can accidentally spoil your ~~beautiful~~ linear history.

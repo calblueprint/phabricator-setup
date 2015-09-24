@@ -15,6 +15,6 @@ if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
     echo "FATAL ERROR: You cannot commit directly to the master branch."
     echo
     echo "Commit to a feature branch instead:"
-    echo "    https://docs.calblueprint.org/dev/git-at-bp"
+    echo "    http://docs.calblueprint.org/dev/git-at-bp"
     exit 1
 fi
