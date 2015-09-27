@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # A pre-commit hook that makes it illegal to commit to master
-# on the repo.  An exception is made for 'arc land', which is the preffered
+# on the repo.  An exception is made for 'arc', which is the preffered
 # workflow.
 #
 # For emergencies, you can override this hook by using 'git commit -n'.
 
 # 'arc' will set this ARCANIST environment variable while it runs a command
-if [ "$ARCANIST" == "land" ]; then
+if [ -n "$ARCANIST" ]; then
     exit 0
 fi
 

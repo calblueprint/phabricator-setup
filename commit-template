@@ -3,11 +3,10 @@
 Summary:
 <longer, detailed summary>
 
-% Add tags below this line. Please keep your project's tag.
-#{project}
-
 Test Plan:
 
 Reviewers: {project_lead}
 
 Subscribers: {teammates}
+
+Projects: #{project}

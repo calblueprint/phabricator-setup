@@ -34,7 +34,7 @@ In your project directory (which your PL should have already configured to work 
 This should print a URL to your terminal. Follow the link, copy the code given, and paste it back in your terminal.
 
 ### Step 4: Configure local repo git conventions
-Luckily, this step is automated. Copy/paste the following into your terminal to curl and run an automated script that will set up your repo with some goodies that should streamline your workflow:
+Luckily, this step is automated. Navigate to the root of your repo and copy/paste the following into your terminal to curl and run an automated script that will set up your repo with some goodies that should streamline your workflow:
 
 	curl https://raw.githubusercontent.com/calblueprint/phabricator-setup/master/bin/bp-phab-dev-setup.py > bp-phab-dev-setup.py && python bp-phab-dev-setup.py && (yes | rm -f bp-phab-dev-setup.py)
 
@@ -46,7 +46,6 @@ This script does the following automagically:
 - Configures a git hook on `prepare-commit-msg` to disable committing with `-m`, in order for git to pick up the aforementioned commit template.
 - Sets up your repo to automatically `rebase` on `git pull`.
 - Configures `arc vdiff`, an alias for `arc diff --verbatim`.
-- Minor: Changes the comment character in commit messages from `#` to `%`.
 
 ### Step 5: Voila!
 You should be configured to push diffs for code review onto Phabricator, yay! Read the next section to get a feel for the Phabricator workflow.
@@ -71,7 +70,7 @@ Some of these rules are stricly enforced by the above configuration you did on y
 	The aforementioned automated script should have set up this arc alias for you. We use `arc vdiff` instead of `arc diff` because we want to explicitly keep the format of our commit template.
 	- **Super useful:** If you'd like to preview your diff before actually submitting it for review, use `arc diff --preview` instead!
 
-4. Often, your PL will give you feedback on your review that will prompt you to make changes before you can push to master.  Make the changes/fixes as normal in your branch, and then use `git commit --amend` to amend your previous git commit. (This is normally bad GitHub practice, but becomes very useful and actually preferred when using Phabricator.)  Then, run `arc diff` (this time _without_ the `verbatim`). Your editor should open up with a message indicating that your are making a revision to an _existing_ Phab diff.
+4. Often, your PL will give you feedback on your review that will prompt you to make changes before you can push to master.  Make the changes/fixes as normal in your branch, and then use `git commit --amend` to amend your previous git commit. (This is normally bad GitHub practice, but becomes very useful and actually preferred when using Phabricator.)  Then, run `arc vdiff`. Your editor should open up with a message indicating that your are making a revision to an _existing_ Phab diff.
 	>
 	- If you need to force `arc` to assign the new commits to the correct Phab revision ID, use `arc diff --update <revision id>`
 	- If you don't need to change your commit message on amend, you can use the `--no-edit` flag to skip editing it.
