@@ -4,10 +4,16 @@
 # on the repo.  An exception is made for 'arc', which is the preffered
 # workflow.
 #
-# For emergencies, you can override this hook by using 'git commit -n'.
+# For emergencies, you can override this hook prefixing your command with
+# a `NOHOOK=1` environment variable, e.g.:
+#
+#     NOHOOK=1 git commit -m "yoloswag420"
 
 # 'arc' will set this ARCANIST environment variable while it runs a command
-if [ -n "$ARCANIST" ]; then
+#
+# $NOHOOK allows skipping of all hooks including prepare-commit-msg, which
+# does not support skipping via the --no-verify flag, unfortunately.
+if [ -n "$ARCANIST" ] || [ -z "$NOHOOK" ]; then
     exit 0
 fi
 

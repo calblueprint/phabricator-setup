@@ -107,7 +107,7 @@ def set_commit_template():
         'git config --local commit.template .git/commit-template'.split())
     subprocess.check_call(
         ['arc', 'alias', 'vdiff',
-         '! $(arc which | grep -q "No revisions match") && arc diff --verbose $* || arc diff $*'])
+         '! $(arc which | grep -q "No revisions match") && arc diff --verbatim $* || arc diff $*'])
 
     _log_success('commit template configured.')
     _log_success("be sure to modify '.git/commit-template' for your team's specifics!")
