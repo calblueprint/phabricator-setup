@@ -161,7 +161,7 @@ configured for things to work properly with Phabricator.
 
     	master
 
-These last two steps configure Phabricator to work properly with [Traphic](https://github.com/calblueprint/traphic.git), the tool we will use for GitHub continuous integration. *You must configure this step, otherwise your devs will run into weird problems.*
+These last two steps configure Phabricator to work properly with [Traphic](https://github.com/calblueprint/traphic.git), the tool we will use for GitHub continuous integration. *You must configure this step, otherwise Phabricator will automatrically close diffs--this is very bad and confusing for everyone.*
 
 ### Step 5: Configure local repo git conventions
 See Step 4 of the Developer setup.
