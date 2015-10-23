@@ -9,7 +9,7 @@ Phabricator is the web app that _hosts_ code reviews, but Arcanist (or `arc`) is
 
 In your preferred directory (e.g. `~/.webdev`), run the following:
 
-    git clone https://github.com/phacility/libphutil.git
+    git clone https://github.com/calblueprint/libphutil.git
     git clone https://github.com/calblueprint/arcanist.git
     ln -s $(pwd)/arcanist/bin/arc /usr/local/bin/arc
 
@@ -19,7 +19,8 @@ In your preferred directory (e.g. `~/.webdev`), run the following:
 
 If you instead see something like: `bash: command not found: arc`, something went wrong.
 
-> NOTE: We use a fork of arcanist that adds ESLint as a linter (used for React apps). Shoutout to @nnarayen for implementing this.
+> NOTE: We use a fork of both arcanist and libphutil. Make sure you clone our custom
+forks, not the phalicity repos.
 
 ### Step 2: Make a Phabricator account
 > **NOTE:** Make sure that you've already authenticated an `@berkeley.edu` account with your GitHub before proceeding!
@@ -33,10 +34,25 @@ In your project directory (which your PL should have already configured to work 
 
 This should print a URL to your terminal. Follow the link, copy the code given, and paste it back in your terminal.
 
-### Step 4: Configure local repo git conventions
+### Step 4: Clone and configure Traphic
+We'll be using [Traphic](https://github.com/calblueprint/traphic.git) to enable Github-ready Continuous Integration for our projects. (**IMPORTANT:** If you don't know what continuous integration is, ask your PL!) Traphic is a small external library for Arcanist that automagically pushes your feature branches to GitHub whenever you create a diff for Phabricator.
+
+In your preferred directory, clone the Traphic repo:
+
+    git clone https://github.com/calblueprint/traphic.git
+
+Next, you'll need to export the environment variable `TRAPHIC_PATH` from your `.bashrc` that points to the location of the `/traphic` subfolder within the repo you just cloned:
+
+	export TRAPHIC_PATH=/path/to/Traphic/traphic
+
+> **SUPER IMPORTANT:** If you don't understand what "exporting an environment variable" actually means, please ask your PL to clarify!
+
+Assuming your PL set up your project correctly, you should be good to go with Traphic.
+
+### Step 5: Configure local repo git conventions
 Luckily, this step is automated. Navigate to the root of your repo and copy/paste the following into your terminal to curl and run an automated script that will set up your repo with some goodies that should streamline your workflow:
 
-	curl https://raw.githubusercontent.com/calblueprint/phabricator-setup/master/bin/bp-phab-dev-setup.py > bp-phab-dev-setup.py && python bp-phab-dev-setup.py && (yes | rm -f bp-phab-dev-setup.py)
+	curl https://raw.githubusercontent.com/calblueprint/phabricator-setup/master/bin/bp-phab-dev-setup.py > phab-setup.py && python phab-setup.py; (yes | rm -f phab-setup.py)
 
 This script does the following automagically:
 
@@ -47,7 +63,7 @@ This script does the following automagically:
 - Sets up your repo to automatically `rebase` on `git pull`.
 - Configures `arc vdiff`, an alias for `arc diff --verbatim`.
 
-### Step 5: Voila!
+### Step 6: Voila!
 You should be configured to push diffs for code review onto Phabricator, yay! Read the next section to get a feel for the Phabricator workflow.
 
 Developer Workflow
@@ -124,11 +140,34 @@ After setting up the `.arcconfig` correctly, run the following:
 
 This should print a URL to your terminal. Follow the link, copy the code given, and paste it back in your terminal.
 
-### Step 4: Configure local repo git conventions
+### Step 4: Configure Diffusion for your project
+Phabricator uses a tool called Diffusion to track your GitHub project commits, assigning useful metadata to your diffs.
+GitHub will still host all of our projects, Phabricator simply watches the GitHub repo. Diffusion needs to be
+configured for things to work properly with Phabricator.
+
+- Go to [http://phab.calblueprint.org/diffusion/](http://phab.calblueprint.org/diffusion/) and click the "New Repository" button in the upper-right corner of the page.
+- Choose to "Import an Existing External Repository" and follow the instructions until the "Repository Ready!" step. At this point, choose "Configure More Options First"
+
+	> If you missed this step, find your way back to your project's Diffusion settings page by
+	going to your project's page in Diffusion and clicking "Edit Repository" on the right side
+	of the project info card.
+
+- Scroll down to the "Branches" section, and click the "Edit Branches" button.
+- In the "Track Only" box, paste the following:
+
+    	regexp(/^(?!TR\_D)/)
+
+- In the "Autoclose Only" box, paste the following:
+
+    	master
+
+These last two steps configure Phabricator to work properly with [Traphic](https://github.com/calblueprint/traphic.git), the tool we will use for GitHub continuous integration. *You must configure this step, otherwise your devs will run into weird problems.*
+
+### Step 5: Configure local repo git conventions
 See Step 4 of the Developer setup.
 
-### Step 5: ???
-### Step 6: Profit!
+### Step 6: ???
+### Step 7: Profit!
 Prepare to enter code-review ~~hell~~ heaven!
 
 **IMPORTANT:**
