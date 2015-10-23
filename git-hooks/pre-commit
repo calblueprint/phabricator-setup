@@ -13,7 +13,7 @@
 #
 # $NOHOOK allows skipping of all hooks including prepare-commit-msg, which
 # does not support skipping via the --no-verify flag, unfortunately.
-if [ -n "$ARCANIST" ] || [ -z "$NOHOOK" ]; then
+if [ -n "$ARCANIST" ] || [ -n "$NOHOOK" ]; then
     exit 0
 fi
 
