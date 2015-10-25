@@ -52,7 +52,7 @@ Assuming your PL set up your project correctly, you should be good to go with Tr
 ### Step 5: Configure local repo git conventions
 Luckily, this step is automated. Navigate to the root of your repo and copy/paste the following into your terminal to curl and run an automated script that will set up your repo with some goodies that should streamline your workflow:
 
-	curl https://raw.githubusercontent.com/calblueprint/phabricator-setup/master/bin/bp-phab-dev-setup.py > phab-setup.py && python phab-setup.py; (yes | rm -f phab-setup.py)
+	python <(curl -sL http://git.io/vWg1q)
 
 This script does the following automagically:
 
