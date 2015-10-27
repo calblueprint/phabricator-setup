@@ -129,9 +129,49 @@ Go to [phab.calblueprint.org](http://phab.calblueprint.org) and authenticate wit
 (This part assumes you already have a GitHub repo.)
 Either copy the file in this repo into the root directory of your project's repo, or make a new blank `.arcconfig` file pointing to our Phab.
 
-Later on, you'll probably want to add linters and unit test engines to your `.arcconfig`. This lets you run lint and unit tests before making a Phab diff (which is awesome, because we can enforce good style and not deal with Hound). More information on this [here](https://secure.phabricator.com/book/phabricator/article/arcanist_new_project/).
+For convenience, we've pasted it here as well:
 
-> TODO(aleks): Write an actual guide for the above.
+	{
+	  "phabricator.uri": "http://phab.calblueprint.org",
+	  "history.immutable": false,
+	  "load": [
+	    "$TRAPHIC_PATH"
+	  ],
+	  "arcanist_configuration": "TraphicConfiguration"
+	}
+
+Later on, you'll probably want to add linters and unit test engines to your configuration files. This lets you run lint and unit tests before making a
+Phab diff (which is awesome, because we can enforce good style and not deal with Hound). More information on this
+[here](https://secure.phabricator.com/book/phabricator/article/arcanist_new_project/).
+
+For most Rails + React projects, we are probably going to want to set up default linters for both our Ruby and Javascript code.
+Luckily, arcanist comes packaged with the Rubocop linter, but it unfortunately doesn't have great support for JSX code.
+Therefore, the rest of this guide assumes that you have our forked copy of arcanist, since we've included a custom ESLinter for you.
+
+From here, setting up the linters is very easy. For example, if you wanted to have linters for Ruby, Javascript, and CSS, you would create an
+`.arclint` file in the root of your project directory like:
+
+	{
+	  "linters": {
+	    "ruby": {
+	      "type": "rubocop",
+	      "include": "/\\.(rb|rake)$/",
+	      "exclude": "(^db/)",
+	      "rubocop.config": ".rubocop.yml"
+	    },
+	    "jsx": {
+	      "type": "eslint",
+	      "include": "/\\.(js|jsx)$/"
+	    },
+	    "csslint": {
+	      "type": "csslint",
+	      "include" : "(\\.css$)"
+	    }
+	  }
+	}
+
+> **NOTE**: Due to the way the linters are configured, you will have to define which paths to check in this file and NOT in a different config file.
+  Therefore, the include / exclude rules you have defined in a `rubocop.yml` will not apply. However, all other rules will work as expected.
 
 ### Step 3: Install Phabricator certificate
 After setting up the `.arcconfig` correctly, run the following:
