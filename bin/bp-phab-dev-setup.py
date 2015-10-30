@@ -6,6 +6,9 @@ import os
 import sys
 import urllib
 import subprocess
+import shutil
+import ConfigParser
+from StringIO import StringIO
 
 GITHUB_RAW_URL = 'https://raw.githubusercontent.com/calblueprint/phabricator-setup/master'
 
@@ -20,10 +23,6 @@ for k, v in GITHOOKS.iteritems():
 COMMIT_TEMPLATE_URL = '%s/commit-template' % GITHUB_RAW_URL
 
 
-class FileNotFoundError(Exception):
-    pass
-
-
 def _parse_args():
     parser = argparse.ArgumentParser(
         description='Configures a Blueprint repo for Phabricator workflow.')
@@ -32,32 +31,56 @@ def _parse_args():
         default=os.getcwd(),
         help='directory of repo. default to current directory')
     parser.add_argument(
+        '--undo',
+        action='store_true',
+        help='undo all bp phab settings')
+    parser.add_argument(
         '--no-git-hooks',
         action='store_true',
         help='do not install git hook')
     parser.add_argument(
         '--no-commit-template',
         action='store_true',
-        help='do set up commit template')
+        help='do not set up commit template')
+    parser.add_argument(
+        '--no-arc-alias',
+        action='store_true',
+        help='do not set up arc alias')
     parser.add_argument(
         '--no-pull-rebase',
         action='store_true',
         help='do not set "git pull --rebase" to default action for "git pull"')
     return parser.parse_args()
 
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+RESET_SEQ = "\033[0m"
+COLOR_SEQ = "\033[%d;3%dm"
+
+
+def _color(string, color, bold=False):
+    return (COLOR_SEQ % (1 if bold else 0, color)) + string + RESET_SEQ
+
+
+def _log_info(msg):
+    logging.info(_color(msg, GREEN))
+
 
 def _log_success(msg):
-    logging.info('SUCCESS: %s' % msg)
+    logging.info(_color('SUCCESS: ' + msg, BLUE))
 
 
 def _log_failure(msg):
-    logging.error('FAILURE: %s' % msg)
+    logging.error(_color('FAILURE: ' + msg, YELLOW))
+
+
+def _critical(msg):
+    logging.critical(_color('CRITICAL: ' + msg, RED))
+    sys.exit(1)
 
 
 def _curl_file_to_dst(file_url, dst, chmod=0o644):
     if urllib.urlopen(file_url).getcode() >= 400:
-        logging.error("ERROR: couldn't find file at %s" % file_url)
-        raise FileNotFoundError
+        _critical("couldn't find file at %s" % file_url)
     urllib.urlretrieve(file_url, dst)
     os.chmod(dst, chmod)
 
@@ -65,8 +88,7 @@ def _curl_file_to_dst(file_url, dst, chmod=0o644):
 def _curl_file_to_buf(file_url):
     f = urllib.urlopen(file_url)
     if f.getcode() >= 400:
-        logging.error("ERROR: couldn't find file at %s" % file_url)
-        raise FileNotFoundError
+        _critical("couldn't find file at %s" % file_url)
     return f.read()
 
 
@@ -81,54 +103,165 @@ def set_git_hooks(no_template):
     _log_success('git hooks configured.')
 
 
-def set_commit_template():
+def set_commit_template(first_run):
+    if not first_run:
+        with open('.git/commit-template', 'r') as f:
+            delim = _color(
+                '############################################################',
+                GREEN)
+            print delim
+            print f.read().rstrip()
+            print delim
+            print
+        if _yn_query("Would you like to re-use this existing template?"):
+            return
     try:
         tmpl = _curl_file_to_buf(COMMIT_TEMPLATE_URL)
     except FileNotFoundError:
         return _log_failure("couldn't configure git hooks")
     format_args = {
-        'project': raw_input((
+        'project': raw_input(_color((
             "\nType the name of your project as it appears on Phabricator.\n"
-            "(Visit http://phab.calblueprint.org/project/query/active/ for reference.)\n"
-            "> ")),
-        'project_lead': raw_input((
+            "(Visit "), GREEN) + _color("http://phab.calblueprint.org/project/query/active/", GREEN, True) +
+            _color(" for reference.)\n> ", GREEN)),
+        'project_lead': raw_input(_color((
             "\nType the name of your project leader as it appears on Phabricator.\n"
-            "(Visit http://phab.calblueprint.org/people/ for reference.)\n"
-            "> ")),
-        'teammates': raw_input((
+            "If you are the project leader, you should probably leave this blank.\n"
+            "(Visit "), GREEN) + _color("http://phab.calblueprint.org/people/", GREEN, True) +
+            _color(" for reference.)\n> ", GREEN)),
+        'teammates': raw_input(_color((
             "\nType the names of your teammates as they appear on Phabricator, comma delimited.\n"
             "(Example: '> caseytaco, generic, tofu, aleks')\n"
-            "> "))
+            "> "), GREEN))
     }
     with open('.git/commit-template', 'w+') as f:
         f.write(tmpl.format(**format_args))
 
     subprocess.check_call(
         'git config --local commit.template .git/commit-template'.split())
+
+    _log_success('commit template configured.')
+
+
+def set_arc_alias():
     subprocess.check_call(
         ['arc', 'alias', 'vdiff',
          '! $(arc which | grep -q "No revisions match") && arc diff --verbatim $* || arc diff $*'])
-
-    _log_success('commit template configured.')
-    _log_success("be sure to modify '.git/commit-template' for your team's specifics!")
+    # don't need to log success here because arc should do it for us
 
 
 def set_default_pull_rebase():
-    subprocess.check_call(
-        'git config --local pull.rebase true'.split())
+    subprocess.check_call('git config --local pull.rebase true'.split())
     _log_success('rebase by default on pull configured.')
+
+
+def backup_orig_config():
+    if not os.path.isfile('.git/prebpphab_config'):
+        shutil.copy('.git/config', '.git/prebpphab_config')
+        return True
+    return False
+
+
+def _yn_query(question, default="yes"):
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while True:
+        sys.stdout.write(_color(question + prompt, GREEN))
+        choice = raw_input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write(
+                _color("Please respond with 'y(es)' or 'n(o)'. ", GREEN)
+            )
+
+
+def _read_gitconfig(parser, path):
+    with open(path) as f:
+        c = f.readlines()
+    parser.readfp(StringIO(''.join([l.lstrip() for l in c])))
+
+
+def _undo_repo():
+    if not os.path.isfile('.git/prebpphab_config'):
+        _critical("Could not find backup config file. Cannot undo, aborting. :(")
+
+    _log_info('Undoing Blueprint Phabricator workflow setup...')
+
+    backup_cfg = ConfigParser.ConfigParser()
+    _read_gitconfig(backup_cfg, '.git/prebpphab_config')
+    cfg = ConfigParser.ConfigParser()
+    _read_gitconfig(cfg, '.git/config')
+
+    # remove hooks
+    for hook in GITHOOKS.iterkeys():
+        path = '.git/hooks/'+hook
+        if os.path.isfile(path):
+            os.remove(path)
+    _log_success("removed git hooks.")
+
+    # remove commit template
+    if os.path.isfile('.git/commit-template'):
+        os.remove('.git/commit-template')
+    _log_success("removed commit template.")
+
+    # restore to default options
+    options = [
+        ('pull', 'rebase'),
+        ('commit', 'template')
+    ]
+    for sec, opt in options:
+        if backup_cfg.has_option(sec, opt):
+            subprocess.check_call(
+                ('git config --local %s.%s %s' % (sec, opt, backup_cfg.get(sec, opt))).split()
+            )
+            cfg.set(sec, opt, backup_cfg.get(sec, opt))
+        else:
+            subprocess.check_call(
+                ('git config --local --unset %s.%s' % (sec, opt)).split()
+            )
+    _log_success("restored repo git config options.")
+
+    # unalias `arc vdiff`
+    subprocess.check_call('arc alias vdiff'.split())
+    _log_success("unaliased vdiff")
+
+    # remove backup config
+    if os.path.isfile('.git/prebpphab_config'):
+        os.remove('.git/prebpphab_config')
+    _log_success("removed pre-phabricator backup config")
 
 
 def _setup_repo(cli_args):
     os.chdir(args.dir)
     if not os.path.isdir('.git'):
-        logging.critical('Not a git repo. Exiting...')
-        sys.exit(1)
+        _critical('Not at the root of the git repo! Exiting...')
+
+    if cli_args.undo:
+        _undo_repo()
+        return
+
+    _log_info('Setting up repo for Blueprint Phabricator workflow...')
+
+    first_run = backup_orig_config()
 
     if not cli_args.no_git_hooks:
         set_git_hooks(cli_args.no_commit_template)
     if not cli_args.no_commit_template:
-        set_commit_template()
+        set_commit_template(first_run)
+    if not cli_args.no_arc_alias:
+        set_arc_alias()
     if not cli_args.no_pull_rebase:
         set_default_pull_rebase()
 
@@ -139,7 +272,5 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(message)s')
     logging.getLogger().setLevel(logging.INFO)
 
-    logging.info('Setting up repo for Blueprint Phabricator workflow...')
-
     _setup_repo(args)
-    logging.info('All done!')
+    _log_info('All done!')
