@@ -194,15 +194,7 @@ def _read_gitconfig(parser, path):
 
 
 def _undo_repo():
-    if not os.path.isfile('.git/prebpphab_config'):
-        _critical("Could not find backup config file. Cannot undo, aborting. :(")
-
     _log_info('Undoing Blueprint Phabricator workflow setup...')
-
-    backup_cfg = ConfigParser.ConfigParser()
-    _read_gitconfig(backup_cfg, '.git/prebpphab_config')
-    cfg = ConfigParser.ConfigParser()
-    _read_gitconfig(cfg, '.git/config')
 
     # remove hooks
     for hook in GITHOOKS.iterkeys():
@@ -216,18 +208,34 @@ def _undo_repo():
         os.remove('.git/commit-template')
     _log_success("removed commit template.")
 
+    backup_found = True
+    if not os.path.isfile('.git/prebpphab_config'):
+        backup_found = False
+        if not _yn_query("Could not find backup config file. Would you like to reset to defaults anyway?"):
+            _critical("No backup config file, aborting.")
+
     # restore to default options
     options = [
         ('pull', 'rebase'),
         ('commit', 'template')
     ]
-    for sec, opt in options:
-        if backup_cfg.has_option(sec, opt):
-            subprocess.check_call(
-                ('git config --local %s.%s %s' % (sec, opt, backup_cfg.get(sec, opt))).split()
-            )
-            cfg.set(sec, opt, backup_cfg.get(sec, opt))
-        else:
+    if backup_found:
+        backup_cfg = ConfigParser.ConfigParser()
+        _read_gitconfig(backup_cfg, '.git/prebpphab_config')
+        cfg = ConfigParser.ConfigParser()
+        _read_gitconfig(cfg, '.git/config')
+        for sec, opt in options:
+            if backup_cfg.has_option(sec, opt):
+                subprocess.check_call(
+                    ('git config --local %s.%s %s' % (sec, opt, backup_cfg.get(sec, opt))).split()
+                )
+                cfg.set(sec, opt, backup_cfg.get(sec, opt))
+            else:
+                subprocess.check_call(
+                    ('git config --local --unset %s.%s' % (sec, opt)).split()
+                )
+    else:
+        for sec, opt in options:
             subprocess.check_call(
                 ('git config --local --unset %s.%s' % (sec, opt)).split()
             )
