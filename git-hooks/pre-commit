@@ -18,9 +18,9 @@ if [ -n "$ARCANIST" ] || [ -n "$NOHOOK" ]; then
 fi
 
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
-    echo "FATAL ERROR: You cannot commit directly to the master branch."
+    echo -e "\033[0;31mFATAL ERROR: You cannot commit directly to the master branch."
     echo
-    echo "Commit to a feature branch instead:"
-    echo "    http://docs.calblueprint.org/dev/git-at-bp"
+    echo -e "\033[34mCommit to a feature branch instead:"
+    echo -e "    > \033[4mhttp://docs.calblueprint.org/dev/git-at-bp\033[0m"
     exit 1
 fi

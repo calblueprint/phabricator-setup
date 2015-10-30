@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import argparse
-import logging
 import os
 import sys
 import urllib
@@ -62,19 +61,19 @@ def _color(string, color, bold=False):
 
 
 def _log_info(msg):
-    logging.info(_color(msg, GREEN))
+    print _color(msg, GREEN)
 
 
 def _log_success(msg):
-    logging.info(_color('SUCCESS: ' + msg, BLUE))
+    print _color('SUCCESS: ' + msg, BLUE)
 
 
 def _log_failure(msg):
-    logging.error(_color('FAILURE: ' + msg, YELLOW))
+    print _color('FAILURE: ' + msg, YELLOW)
 
 
 def _critical(msg):
-    logging.critical(_color('CRITICAL: ' + msg, RED))
+    print _color('CRITICAL: ' + msg, RED)
     sys.exit(1)
 
 
@@ -95,11 +94,8 @@ def _curl_file_to_buf(file_url):
 def set_git_hooks(no_template):
     if no_template:
         del GITHOOKS['prepare-commit-msg']
-    try:
-        for name, url in GITHOOKS.iteritems():
-            _curl_file_to_dst(url, '.git/hooks/'+name, chmod=0o755)
-    except FileNotFoundError:
-        return _log_failure("couldn't configure git hooks")
+    for name, url in GITHOOKS.iteritems():
+        _curl_file_to_dst(url, '.git/hooks/'+name, chmod=0o755)
     _log_success('git hooks configured.')
 
 
@@ -187,6 +183,7 @@ def _yn_query(question, default="yes"):
             )
 
 
+# Source: http://stackoverflow.com/a/23145275
 def _read_gitconfig(parser, path):
     with open(path) as f:
         c = f.readlines()
@@ -276,9 +273,5 @@ def _setup_repo(cli_args):
 
 if __name__ == '__main__':
     args = _parse_args()
-
-    logging.basicConfig(format='%(message)s')
-    logging.getLogger().setLevel(logging.INFO)
-
     _setup_repo(args)
     _log_info('All done!')

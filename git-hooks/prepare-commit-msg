@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # A prepare-commit-message hook that makes it illegal to commit using the '-m'
 # flag. Developers should commit normally or use '--amend' instead, in order
@@ -19,11 +19,11 @@ if [ -n "$ARCANIST" ] || [ -n "$NOHOOK" ]; then
 fi
 
 if [ "$2" = "message" ]; then
-    echo "FATAL ERROR: Do not commit with the '-m' flag."
+    echo -e "\033[0;31mFATAL ERROR: Cannot commit with the '-m' flag."
     echo
-    echo "If you're fixing an existing diff, use the '--amend' flag."
-    echo "If you plan to amend and do not want to change your message,"
-    echo "use '--no-edit' as well."
-    echo "    http://docs.calblueprint.org/dev/git-at-bp"
+    echo -e "\033[34mIf you're fixing an existing diff, use the \033[35m--amend\033[34m flag."
+    echo -e "If you plan to amend and do not want to change your message,"
+    echo -e "use \033[35m--no-edit\033[34m as well."
+    echo -e "    > \033[4mhttp://docs.calblueprint.org/dev/git-at-bp\033[0m"
     exit 1
 fi
