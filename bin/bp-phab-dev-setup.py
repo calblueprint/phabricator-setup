@@ -99,8 +99,8 @@ def set_git_hooks(no_template):
     _log_success('git hooks configured.')
 
 
-def set_commit_template(first_run):
-    if not first_run:
+def set_commit_template():
+    if os.path.isfile('.git/commit-template'):
         with open('.git/commit-template', 'r') as f:
             delim = _color(
                 '############################################################',
@@ -111,10 +111,7 @@ def set_commit_template(first_run):
             print
         if _yn_query("Would you like to re-use this existing template?"):
             return
-    try:
-        tmpl = _curl_file_to_buf(COMMIT_TEMPLATE_URL)
-    except FileNotFoundError:
-        return _log_failure("couldn't configure git hooks")
+    tmpl = _curl_file_to_buf(COMMIT_TEMPLATE_URL)
     format_args = {
         'project': raw_input(_color((
             "\nType the name of your project as it appears on Phabricator.\n"
@@ -154,8 +151,6 @@ def set_default_pull_rebase():
 def backup_orig_config():
     if not os.path.isfile('.git/prebpphab_config'):
         shutil.copy('.git/config', '.git/prebpphab_config')
-        return True
-    return False
 
 
 def _yn_query(question, default="yes"):
@@ -259,12 +254,11 @@ def _setup_repo(cli_args):
 
     _log_info('Setting up repo for Blueprint Phabricator workflow...')
 
-    first_run = backup_orig_config()
-
+    backup_orig_config()
     if not cli_args.no_git_hooks:
         set_git_hooks(cli_args.no_commit_template)
     if not cli_args.no_commit_template:
-        set_commit_template(first_run)
+        set_commit_template()
     if not cli_args.no_arc_alias:
         set_arc_alias()
     if not cli_args.no_pull_rebase:
