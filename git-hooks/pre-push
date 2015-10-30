@@ -28,7 +28,7 @@ while read local_ref local_sha remote_ref remote_sha; do
         echo -e "\033[0;31mFATAL ERROR: You cannot push to the master branch manually."
         echo
         echo -e "\033[34mInstead, you must deploy a feature branch via \033[35marc land\033[34m."
-        echo -e "    > \033[4mhttp://docs.calblueprint.org/dev/git-at-bp\033[0m"
+        echo -e "    > \033[4mhttp://docs.calblueprint.org/dev/phab-at-bp\033[0m"
         exit 1
     fi
 done
