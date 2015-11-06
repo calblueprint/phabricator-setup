@@ -25,10 +25,19 @@ fi
 # We complain if any remote ref is refs/heads/master
 while read local_ref local_sha remote_ref remote_sha; do
     if [ "${remote_ref}" = "refs/heads/master" ]; then
-        echo -e "\033[0;31mFATAL ERROR: You cannot push to the master branch manually."
+        RED=`tput setaf 1`
+        BLUE=`tput setaf 4`
+        PURP=`tput setaf 5`
+        UL=`tput smul`
+        RESET=`tput sgr0`
+
+        echo -e "${RED}FATAL ERROR: You cannot push to the master branch manually."
         echo
-        echo -e "\033[34mInstead, you must deploy a feature branch via \033[35marc land\033[34m."
-        echo -e "    > \033[4mhttp://docs.calblueprint.org/dev/phab-at-bp\033[0m"
+        echo -e "${BLUE}Instead, you must deploy a feature branch via ${PURP}arc land${BLUE}."
+        echo -e "    > ${UL}http://docs.calblueprint.org/dev/phab-at-bp"
+        echo -en ${RESET}
+
+        unset RED BLUE PURP UL RESET
         exit 1
     fi
 done

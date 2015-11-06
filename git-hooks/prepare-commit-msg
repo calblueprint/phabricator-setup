@@ -19,11 +19,20 @@ if [ -n "$ARCANIST" ] || [ -n "$NOHOOK" ]; then
 fi
 
 if [ "$2" = "message" ]; then
-    echo -e "\033[0;31mFATAL ERROR: Cannot commit with the '-m' flag."
+    RED=`tput setaf 1`
+    BLUE=`tput setaf 4`
+    PURP=`tput setaf 5`
+    UL=`tput smul`
+    RESET=`tput sgr0`
+
+    echo -e "${RED}FATAL ERROR: Cannot commit with the ${PURP}-m${RED} flag."
     echo
-    echo -e "\033[34mIf you're fixing an existing diff, use the \033[35m--amend\033[34m flag."
+    echo -e "${BLUE}If you're fixing an existing diff, use the ${PURP}--amend${BLUE} flag."
     echo -e "If you plan to amend and do not want to change your message,"
-    echo -e "use \033[35m--no-edit\033[34m as well."
-    echo -e "    > \033[4mhttp://docs.calblueprint.org/dev/phab-at-bp\033[0m"
+    echo -e "use ${PURP}--no-edit${BLUE} as well."
+    echo -e "    > ${UL}http://docs.calblueprint.org/dev/phab-at-bp"
+    echo -en ${RESET}
+
+    unset RED BLUE PURP UL RESET
     exit 1
 fi
