@@ -31,6 +31,11 @@ while read local_ref local_sha remote_ref remote_sha; do
         UL=`tput smul`
         RESET=`tput sgr0`
 
+        doge="$(git rev-parse --git-dir)/hooks/doge.txt"
+        if [ -f $doge ]; then
+            printf "%b\n" "$(cat $doge)"
+        fi
+
         echo "${RED}FATAL ERROR: You cannot push to the master branch manually."
         echo
         echo "${BLUE}Instead, you must deploy a feature branch via ${PURP}arc land${BLUE}."

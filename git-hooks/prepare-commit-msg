@@ -25,6 +25,11 @@ if [ "$2" = "message" ]; then
     UL=`tput smul`
     RESET=`tput sgr0`
 
+    doge="$(git rev-parse --git-dir)/hooks/doge.txt"
+    if [ -f $doge ]; then
+        printf "%b\n" "$(cat $doge)"
+    fi
+
     echo "${RED}FATAL ERROR: Cannot commit with the ${PURP}-m${RED} flag."
     echo
     echo "${BLUE}If you're fixing an existing diff, use the ${PURP}--amend${BLUE} flag."

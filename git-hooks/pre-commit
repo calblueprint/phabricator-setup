@@ -23,6 +23,11 @@ if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
     UL=`tput smul`
     RESET=`tput sgr0`
 
+    doge="$(git rev-parse --git-dir)/hooks/doge.txt"
+    if [ -f $doge ]; then
+        printf "%b\n" "$(cat $doge)"
+    fi
+
     echo "${RED}FATAL ERROR: You cannot commit directly to the master branch."
     echo
     echo "${BLUE}Commit to a feature branch instead:"
