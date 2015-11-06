@@ -34,7 +34,7 @@ while read local_ref local_sha remote_ref remote_sha; do
         echo -e "${RED}FATAL ERROR: You cannot push to the master branch manually."
         echo
         echo -e "${BLUE}Instead, you must deploy a feature branch via ${PURP}arc land${BLUE}."
-        echo -e "    > ${UL}http://docs.calblueprint.org/dev/phab-at-bp"
+        echo -e "    > ${UL}http://git.io/phab-at-bp"
         echo -en ${RESET}
 
         unset RED BLUE PURP UL RESET

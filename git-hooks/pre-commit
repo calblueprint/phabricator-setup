@@ -26,7 +26,7 @@ if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
     echo -e "${RED}FATAL ERROR: You cannot commit directly to the master branch."
     echo
     echo -e "${BLUE}Commit to a feature branch instead:"
-    echo -e "    > ${UL}http://docs.calblueprint.org/dev/phab-at-bp"
+    echo -e "    > ${UL}http://git.io/phab-at-bp"
     echo -en ${RESET}
 
     unset RED BLUE UL RESET
