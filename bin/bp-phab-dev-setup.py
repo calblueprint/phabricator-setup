@@ -140,6 +140,10 @@ def set_arc_alias():
     subprocess.check_call(
         ['arc', 'alias', 'vdiff',
          '! $(arc which | grep -q "No revisions match") && arc diff --verbatim $* || arc diff $*'])
+    if not os.path.isdir('.git/arc'):
+        os.makedirs('.git/arc')
+    with open('.git/arc/default-relative-commit', 'w+') as f:
+        f.write('origin/master')
     # don't need to log success here because arc should do it for us
 
 
@@ -235,6 +239,8 @@ def _undo_repo():
 
     # unalias `arc vdiff`
     subprocess.check_call('arc alias vdiff'.split())
+    if os.path.isfile('.git/arc/default-relative-commit'):
+        os.remove('.git/arc/default-relative-commit')
     _log_success("unaliased vdiff")
 
     # remove backup config
