@@ -17,18 +17,22 @@ if [ -n "$ARCANIST" ] || [ -n "$NOHOOK" ]; then
     exit 0
 fi
 
+RED=`tput setaf 1`
+BLUE=`tput setaf 4`
+PURP=`tput setaf 5`
+GREEN=`tput setaf 2`
+UL=`tput smul`
+RMUL=`tput rmul`
+RESET=`tput sgr0`
+
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
-    RED=`tput setaf 1`
-    BLUE=`tput setaf 4`
-    UL=`tput smul`
-    RESET=`tput sgr0`
 
     echo "${RED}FATAL ERROR: You cannot commit directly to the master branch."
     echo
     echo "${BLUE}Commit to a feature branch instead:"
     echo "    > More info: ${UL}http://git.io/phab-at-bp#faq-2"
     echo -n ${RESET}
-    unset RED BLUE UL RESET
+    unset RED BLUE PURP GREEN RMUL UL RESET
 
     # Check for updates
     DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -39,3 +43,36 @@ if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
 
     exit 1
 fi
+
+# Determine command and whether we're amending.
+CMD=$(ps -ocommand= -p $PPID | cut -d' ' -f 2-)
+if [[ $(echo $CMD | awk '{print $1}') != "commit" ]]; then
+    CMD="$(git config --get alias.${CMD})"
+fi
+if [[ $CMD == *"--amend"* ]]; then
+    unset RED BLUE PURP GREEN RMUL UL RESET
+    exit 0
+fi
+
+# If we aren't amending, get current revision, if any.
+while read line; do
+    if [[ $line == *"Differential Revision: "* ]]; then
+        REVISION=$(echo $line | rev | awk '{print $1}' | rev)
+    fi
+done < <(git log -1 --format=full)
+
+# Prompt user if we find a revision.
+if [[ -n "${REVISION}" ]]; then
+    echo "${GREEN}It looks like you already have a Phab revision up:${RESET}"
+    echo
+    echo "   ${UL}${REVISION}${RMUL}"
+    echo "   $(git log -1 --oneline | cut -d' ' -f 2-)"
+    echo
+    read -p "${GREEN}Abort this commit so you can rerun with ${PURP}--amend${GREEN} instead? [Y/n] ${RESET}" choice < /dev/tty
+    case "$choice" in
+        y|Y|'' )
+            unset RED BLUE PURP GREEN RMUL UL RESET
+            exit 1;;
+    esac
+fi
+unset RED BLUE PURP GREEN RMUL UL RESET

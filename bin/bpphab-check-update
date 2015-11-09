@@ -1,10 +1,10 @@
 #!/bin/bash
 function update_bpphab() {
-  local DIR PURP GREEN CLEAR
+  local DIR PURP GREEN RESET
   DIR=$(dirname "${BASH_SOURCE[0]}")
   PURP=`tput setaf 5`
   GREEN=`tput setaf 2`
-  CLEAR=`tput sgr0`
+  RESET=`tput sgr0`
 
   if [ ! -f "${DIR}/bpphab_version" ]; then
     exit 0
@@ -28,13 +28,13 @@ function update_bpphab() {
 
   if [[ ${VERSION} != "$(cat ${DIR}/bpphab_version)" ]]; then
     echo
-    read -p "${GREEN}A new version of BP Phab Developer scripts is available! Update? [Y/n] ${CLEAR}" choice < /dev/tty
+    read -p "${GREEN}A new version of BP Phab Developer scripts is available! Update? [Y/n] ${RESET}" choice < /dev/tty
     case "$choice" in
       y|Y|'' )
         python2.7 <(curl -sL https://raw.githubusercontent.com/calblueprint/phabricator-setup/master/bin/bp-phab-dev-setup.py) --update;;
     esac
   else
-    echo "${GREEN}Up to date.${CLEAR}"
+    echo "${GREEN}Up to date.${RESET}"
   fi
 }
 update_bpphab
