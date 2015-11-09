@@ -11,6 +11,8 @@ from StringIO import StringIO
 
 GITHUB_RAW_URL = 'https://raw.githubusercontent.com/calblueprint/phabricator-setup/master'
 
+UPDATER_URL = '%s/bin/bpphab-check-update' % GITHUB_RAW_URL
+
 GITHOOKS = {
     'pre-commit':         '%s/git-hooks/pre-commit',
     'pre-push':           '%s/git-hooks/pre-push',
@@ -29,6 +31,10 @@ def _parse_args():
         '--dir',
         default=os.getcwd(),
         help='directory of repo. default to current directory')
+    parser.add_argument(
+        '--update',
+        action='store_true',
+        help='keep old configuration without asking')
     parser.add_argument(
         '--undo',
         action='store_true',
@@ -99,8 +105,11 @@ def set_git_hooks(no_template):
     _log_success('git hooks configured.')
 
 
-def set_commit_template():
+def set_commit_template(update=False):
     if os.path.isfile('.git/commit-template'):
+        if update:
+            _log_success('reusing existing commit template.')
+            return
         with open('.git/commit-template', 'r') as f:
             delim = _color(
                 '############################################################',
@@ -155,6 +164,16 @@ def set_default_pull_rebase():
 def backup_orig_config():
     if not os.path.isfile('.git/prebpphab_config'):
         shutil.copy('.git/config', '.git/prebpphab_config')
+
+
+def set_version_and_updater():
+    out = subprocess.check_output(
+        'git ls-remote https://github.com/calblueprint/phabricator-setup'.split()
+    ).split()
+    master_ref = out[out.index('refs/heads/master') - 1]
+    with open('.git/bpphab_version', 'wb') as f:
+        f.write(master_ref)
+    _curl_file_to_dst(UPDATER_URL, '.git/bpphab-check-update', chmod=0o755)
 
 
 def _yn_query(question, default="yes"):
@@ -261,10 +280,11 @@ def _setup_repo(cli_args):
     _log_info('Setting up repo for Blueprint Phabricator workflow...')
 
     backup_orig_config()
+    set_version_and_updater()
     if not cli_args.no_git_hooks:
         set_git_hooks(cli_args.no_commit_template)
     if not cli_args.no_commit_template:
-        set_commit_template()
+        set_commit_template(cli_args.update)
     if not cli_args.no_arc_alias:
         set_arc_alias()
     if not cli_args.no_pull_rebase:

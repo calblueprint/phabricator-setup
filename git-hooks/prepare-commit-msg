@@ -30,9 +30,16 @@ if [ "$2" = "message" ]; then
     echo -e "${BLUE}If you're fixing an existing diff, use the ${PURP}--amend${BLUE} flag."
     echo -e "If you plan to amend and do not want to change your message,"
     echo -e "use ${PURP}--no-edit${BLUE} as well."
-    echo -e "    > ${UL}http://git.io/phab-at-bp"
+    echo -e "    > More info: ${UL}http://git.io/phab-at-bp#faq-3"
     echo -en ${RESET}
-
     unset RED BLUE PURP UL RESET
+
+    # Check for updates
+    DIR=$(dirname "${BASH_SOURCE[0]}")
+    if [ -f "${DIR}/../bpphab-check-update" ]; then
+        . ${DIR}/../bpphab-check-update
+    fi
+    unset DIR
+
     exit 1
 fi

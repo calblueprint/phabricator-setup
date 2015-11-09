@@ -26,9 +26,16 @@ if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
     echo -e "${RED}FATAL ERROR: You cannot commit directly to the master branch."
     echo
     echo -e "${BLUE}Commit to a feature branch instead:"
-    echo -e "    > ${UL}http://git.io/phab-at-bp"
+    echo -e "    > More info: ${UL}http://git.io/phab-at-bp#faq-2"
     echo -en ${RESET}
-
     unset RED BLUE UL RESET
+
+    # Check for updates
+    DIR=$(dirname "${BASH_SOURCE[0]}")
+    if [ -f "${DIR}/../bpphab-check-update" ]; then
+        . ${DIR}/../bpphab-check-update
+    fi
+    unset DIR
+
     exit 1
 fi

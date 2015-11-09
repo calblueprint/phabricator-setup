@@ -17,3 +17,5 @@ for f in $(ls ${DIR}/git-hooks); do
     rm -rf ${DIR}/.git/hooks/${f}
     ln -s ${DIR}/git-hooks/${f} ${DIR}/.git/hooks/${f}
 done
+rm -f ${DIR}/.git/bpphab-check-update
+ln -s ${DIR}/bin/bpphab-check-update ${DIR}/.git/bpphab-check-update
