@@ -25,13 +25,13 @@ if [ "$2" = "message" ]; then
     UL=`tput smul`
     RESET=`tput sgr0`
 
-    echo -e "${RED}FATAL ERROR: Cannot commit with the ${PURP}-m${RED} flag."
+    echo "${RED}FATAL ERROR: Cannot commit with the ${PURP}-m${RED} flag."
     echo
-    echo -e "${BLUE}If you're fixing an existing diff, use the ${PURP}--amend${BLUE} flag."
-    echo -e "If you plan to amend and do not want to change your message,"
-    echo -e "use ${PURP}--no-edit${BLUE} as well."
-    echo -e "    > More info: ${UL}http://git.io/phab-at-bp#faq-3"
-    echo -en ${RESET}
+    echo "${BLUE}If you're fixing an existing diff, use the ${PURP}--amend${BLUE} flag."
+    echo "If you plan to amend and do not want to change your message,"
+    echo "use ${PURP}--no-edit${BLUE} as well."
+    echo "    > More info: ${UL}http://git.io/phab-at-bp#faq-3"
+    echo -n ${RESET}
     unset RED BLUE PURP UL RESET
 
     # Check for updates

@@ -1,11 +1,17 @@
 #!/bin/bash
 function update_bpphab() {
-  local DIR
+  local DIR PURP GREEN CLEAR
   DIR=$(dirname "${BASH_SOURCE[0]}")
+  PURP=`tput setaf 5`
+  GREEN=`tput setaf 2`
+  CLEAR=`tput sgr0`
 
   if [ ! -f "${DIR}/bpphab_version" ]; then
     exit 0
   fi
+
+  echo
+  echo -n "${PURP}Checking for BP Phab Developer script updates... "
 
   local VERSION
   while read line; do
@@ -16,20 +22,19 @@ function update_bpphab() {
   done < <(git ls-remote https://github.com/calblueprint/phabricator-setup)
 
   if [ -z "$VERSION" ]; then
-    exit 0
+    echo "Couldn't find version of master (!?!?!?)"
+    exit 1
   fi
 
   if [[ ${VERSION} != "$(cat ${DIR}/bpphab_version)" ]]; then
-    local GREEN CLEAR
-    GREEN=`tput setaf 2`
-    CLEAR=`tput sgr0`
-
     echo
     read -p "${GREEN}A new version of BP Phab Developer scripts is available! Update? [Y/n] ${CLEAR}" choice < /dev/tty
     case "$choice" in
       y|Y|'' )
         python2.7 <(curl -sL https://raw.githubusercontent.com/calblueprint/phabricator-setup/master/bin/bp-phab-dev-setup.py) --update;;
     esac
+  else
+    echo "${GREEN}Up to date.${CLEAR}"
   fi
 }
 update_bpphab

@@ -31,11 +31,11 @@ while read local_ref local_sha remote_ref remote_sha; do
         UL=`tput smul`
         RESET=`tput sgr0`
 
-        echo -e "${RED}FATAL ERROR: You cannot push to the master branch manually."
+        echo "${RED}FATAL ERROR: You cannot push to the master branch manually."
         echo
-        echo -e "${BLUE}Instead, you must deploy a feature branch via ${PURP}arc land${BLUE}."
-        echo -e "    > More info: ${UL}http://git.io/phab-at-bp#faq-2"
-        echo -en ${RESET}
+        echo "${BLUE}Instead, you must deploy a feature branch via ${PURP}arc land${BLUE}."
+        echo "    > More info: ${UL}http://git.io/phab-at-bp#faq-2"
+        echo -n ${RESET}
         unset RED BLUE PURP UL RESET
 
         # Check for updates
