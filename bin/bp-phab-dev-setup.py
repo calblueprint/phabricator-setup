@@ -146,14 +146,14 @@ def set_commit_template(update=False):
 
 
 def set_arc_alias():
-    subprocess.check_call(
+    out = subprocess.check_output(
         ['arc', 'alias', 'vdiff',
          '! $(arc which | grep -q "No revisions match") && arc diff --verbatim $* || arc diff $*'])
     if not os.path.isdir('.git/arc'):
         os.makedirs('.git/arc')
     with open('.git/arc/default-relative-commit', 'w+') as f:
         f.write('origin/master')
-    # don't need to log success here because arc should do it for us
+    _log_success(out.strip())
 
 
 def set_default_pull_rebase():
