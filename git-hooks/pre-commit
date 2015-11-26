@@ -44,6 +44,11 @@ if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
     exit 1
 fi
 
+# If we're even with master, don't prompt anything
+if [[ $(git rev-parse master) == $(git rev-parse HEAD) ]]; then
+    exit 0
+fi
+
 # Determine command and whether we're amending.
 CMD=$(ps -ocommand= -p $PPID | cut -d' ' -f 2-)
 if [[ $(echo $CMD | awk '{print $1}') != "commit" ]]; then
