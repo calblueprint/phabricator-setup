@@ -1,9 +1,10 @@
 <one-line short summary, no longer than this text>
 
 Summary:
-<longer, detailed summary>
+<longer, detailed summary -- typically includes background and next steps>
 
 Test Plan:
+<steps your reviewer should take to verify that your code works>
 
 Reviewers: {project_lead}
 
