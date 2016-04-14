@@ -1,51 +1,34 @@
 #!/bin/bash
 
-# A pre-commit hook that makes it illegal to commit to master
-# on the repo.  An exception is made for 'arc', which is the preffered
-# workflow.
+# A pre-commit hook that makes it illegal to commit to master on the repo.  An exception is made
+# for `arc` which is the preferred workflow.
 #
-# For emergencies, you can override this hook prefixing your command with
-# a `NOHOOK=1` environment variable, e.g.:
+# For emergencies, you can override this hook prefixing your command with a `NOHOOK=1` environment
+# variable, e.g.:
 #
 #     NOHOOK=1 git commit -m "yoloswag420"
 
-# 'arc' will set this ARCANIST environment variable while it runs a command
-#
-# $NOHOOK allows skipping of all hooks including prepare-commit-msg, which
-# does not support skipping via the --no-verify flag, unfortunately.
-if [ -n "$ARCANIST" ] || [ -n "$NOHOOK" ]; then
-    exit 0
+DIR=$(dirname "${BASH_SOURCE[0]}")
+COMMON_PATH="${DIR}/../bpphab-git-hooks-common"
+if [[ ! -f "$COMMON_PATH" ]]; then
+    echo "ERROR: Missing git-hooks common script at $COMMON_PATH"
+    exit 1
 fi
+source "$COMMON_PATH"
 
-RED=`tput setaf 1`
-BLUE=`tput setaf 4`
-PURP=`tput setaf 5`
-GREEN=`tput setaf 2`
-UL=`tput smul`
-RMUL=`tput rmul`
-RESET=`tput sgr0`
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ $BRANCH == "master" ]]; then
 
-if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
-
-    echo "${RED}FATAL ERROR: You cannot commit directly to the master branch."
-    echo
     echo "${BLUE}Commit to a feature branch instead:"
     echo "    > More info: ${UL}http://git.io/phab-at-bp#faq-2"
-    echo -n ${RESET}
-    unset RED BLUE PURP GREEN RMUL UL RESET
-
-    # Check for updates
-    DIR=$(dirname "${BASH_SOURCE[0]}")
-    if [ -f "${DIR}/../bpphab-check-update" ]; then
-        . ${DIR}/../bpphab-check-update
-    fi
-    unset DIR
+    echo -n ${RST}
 
     exit 1
 fi
 
 # If we're even with master, don't prompt anything
-if [[ $(git rev-parse master) == $(git rev-parse HEAD) ]]; then
+HEAD=$(git rev-parse HEAD)
+if [[ $(git rev-parse master) == $HEAD ]]; then
     exit 0
 fi
 
@@ -55,29 +38,55 @@ if [[ $(echo $CMD | awk '{print $1}') != "commit" ]]; then
     CMD="$(git config --get alias.${CMD})"
 fi
 if [[ $CMD == *"--amend"* ]]; then
-    unset RED BLUE PURP GREEN RMUL UL RESET
     exit 0
 fi
 
 # If we aren't amending, get current revision, if any.
 while read line; do
     if [[ $line == *"Differential Revision: "* ]]; then
-        REVISION=$(echo $line | rev | awk '{print $1}' | rev)
+        REVISION_URL=$(echo $line | rev | awk '{print $1}' | rev)
+        REVISION_ID=${REVISION_URL##*/}
+        break
     fi
 done < <(git log -1 --format=full)
 
-# Prompt user if we find a revision.
-if [[ -n "${REVISION}" ]]; then
-    echo "${GREEN}It looks like you already have a Phab revision up:${RESET}"
-    echo
-    echo "   ${UL}${REVISION}${RMUL}"
-    echo "   $(git log -1 --oneline | cut -d' ' -f 2-)"
-    echo
-    read -p "${GREEN}Abort this commit so you can rerun with ${PURP}--amend${GREEN} instead? [Y/n] ${RESET}" choice < /dev/tty
-    case "$choice" in
-        y|Y|'' )
-            unset RED BLUE PURP GREEN RMUL UL RESET
-            exit 1;;
-    esac
+if [[ -n "$REVISION_ID" ]]; then
+    # Check if HEAD is also the tip of another branch. If so, it's likely that
+    # we're making a new diff that depends on a previous diff.
+    while read -r cur_commit _ cur_branch; do
+        cur_branch=${cur_branch##refs/heads/}
+        [[ $cur_branch == $BRANCH || $cur_branch == "TR_D"* ]] && continue
+        if [[ $HEAD == $cur_commit ]]; then
+            DEPENDS_ON=$cur_branch
+        fi
+    done < <(git for-each-ref refs/heads)
+
+    if [[ -n "$DEPENDS_ON" ]]; then  # Probably an intentional dependency
+        echo "${GREEN}The branch ${YELLOW}${DEPENDS_ON}${GREEN} already represents the revision you're committing over."
+        echo "${GREEN}Here are the details on that Phab revision:${RST}"
+        echo
+        echo "   ${UL}${REVISION_URL}${RST_UL}"
+        echo "   $(git log -1 --oneline | cut -d' ' -f 2-)"
+        echo
+        read -p "${GREEN}Continue and make this dependency explicit in your commit message? [Y/n] ${RST}" choice < /dev/tty
+        echo -n ${RST}
+        case "$choice" in
+            y|Y|'' )
+                echo -n "$REVISION_ID" > "$TMPDIR/bpphab_depends_on.$PGID"
+                exit 0;;
+        esac
+
+    else  # Probably meant to amend instead
+        echo "${GREEN}It looks like you already have a Phab revision up:${RST}"
+        echo
+        echo "   ${UL}${REVISION_URL}${RST_UL}"
+        echo "   $(git log -1 --oneline | cut -d' ' -f 2-)"
+        echo
+        read -p "${GREEN}Abort this commit so you can rerun with ${PURP}--amend${GREEN} instead? [Y/n] ${RST}" choice < /dev/tty
+        echo -n ${RST}
+        case "$choice" in
+            y|Y|'' )
+                exit 1;;
+        esac
+    fi
 fi
-unset RED BLUE PURP GREEN RMUL UL RESET

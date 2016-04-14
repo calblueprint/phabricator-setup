@@ -1,24 +1,23 @@
 #!/bin/bash
 
-# A pre-push hook that makes it illegal to push to master on the remote.  An
-# exception is made for 'arc', which is the preffered workflow.
+# A pre-push hook that makes it illegal to push to master on the remote.  An exception is made for
+# `arc` which is the preferred workflow.
 #
 # For emergencies, you can override this hook by using either
 #
 #     git push --no-verify [...]
 #
-# OR by prefixing your command with a `NOHOOK=1` environment
-# variable, e.g.:
+# OR by prefixing your command with a `NOHOOK=1` environment variable, e.g.:
 #
 #     NOHOOK=1 git push [...]
 
-# 'arc' will set this ARCANIST environment variable while it runs a command
-#
-# $NOHOOK allows skipping of all hooks including prepare-commit-msg, which
-# does not support skipping via the --no-verify flag, unfortunately.
-if [ -n "$ARCANIST" ] || [ -n "$NOHOOK" ]; then
-    exit 0
+DIR=$(dirname "${BASH_SOURCE[0]}")
+COMMON_PATH="${DIR}/../bpphab-git-hooks-common"
+if [[ ! -f "$COMMON_PATH" ]]; then
+    echo "ERROR: Missing git-hooks common script at $COMMON_PATH"
+    exit 1
 fi
+source "$COMMON_PATH"
 
 # Remote URLs for which we'll allow pushing to master
 remote_exceptions=(
@@ -38,28 +37,17 @@ while read local_ref local_sha remote_ref remote_sha; do
             break
         fi
     done
-    if [ $except -eq 1 ]; then
+    if [[ $except -eq 1 ]]; then
         continue
     fi
 
-    if [ "${remote_ref}" = "refs/heads/master" ]; then
-        RED=`tput setaf 1`
-        BLUE=`tput setaf 4`
-        PURP=`tput setaf 5`
-        UL=`tput smul`
-        RESET=`tput sgr0`
+    if [[ "${remote_ref}" = "refs/heads/master" ]]; then
 
         echo "${RED}FATAL ERROR: You cannot push to the master branch manually."
         echo
         echo "${BLUE}Instead, you must deploy a feature branch via ${PURP}arc land${BLUE}."
         echo "    > More info: ${UL}http://git.io/phab-at-bp#faq-2"
-        echo -n ${RESET}
-
-        # Check for updates
-        DIR=$(dirname "${BASH_SOURCE[0]}")
-        if [ -f "${DIR}/../bpphab-check-update" ]; then
-            . ${DIR}/../bpphab-check-update
-        fi
+        echo -n ${RST}
 
         exit 1
     fi

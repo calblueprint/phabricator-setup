@@ -1,29 +1,24 @@
 #!/bin/bash
 
 # A prepare-commit-message hook that makes it illegal to commit using the '-m'
-# flag. Developers should commit normally or use '--amend' instead, in order
-# to pick up the commit template. An exception is made for 'arc', which
-# is the preferred workflow.
+# flag. Developers should commit normally or use '--amend' instead in order to
+# pick up the commit template. An exception is made for `arc` which is the
+# preferred workflow.
 #
-# For emergencies, you can override this hook prefixing your command with
-# a `NOHOOK=1` environment variable, e.g.:
+# For emergencies, you can override this hook prefixing your command with a
+# NOHOOK=1 environment variable, e.g.:
 #
 #     NOHOOK=1 git commit -m "yoloswag420"
 
-# 'arc' will set this ARCANIST environment variable while it runs a command
-#
-# $NOHOOK allows skipping of all hooks including prepare-commit-msg, which
-# does not support skipping via the --no-verify flag, unfortunately.
-if [ -n "$ARCANIST" ] || [ -n "$NOHOOK" ]; then
-    exit 0
+DIR=$(dirname "${BASH_SOURCE[0]}")
+COMMON_PATH="${DIR}/../bpphab-git-hooks-common"
+if [[ ! -f "$COMMON_PATH" ]]; then
+    echo "ERROR: Missing git-hooks common script at $COMMON_PATH"
+    exit 1
 fi
+source "$COMMON_PATH"
 
-if [ "$2" = "message" ]; then
-    RED=`tput setaf 1`
-    BLUE=`tput setaf 4`
-    PURP=`tput setaf 5`
-    UL=`tput smul`
-    RESET=`tput sgr0`
+if [[ "$2" == "message" ]]; then
 
     echo "${RED}FATAL ERROR: Cannot commit with the ${PURP}-m${RED} flag."
     echo
@@ -31,15 +26,19 @@ if [ "$2" = "message" ]; then
     echo "If you plan to amend and do not want to change your message,"
     echo "use ${PURP}--no-edit${BLUE} as well."
     echo "    > More info: ${UL}http://git.io/phab-at-bp#faq-3"
-    echo -n ${RESET}
-    unset RED BLUE PURP UL RESET
-
-    # Check for updates
-    DIR=$(dirname "${BASH_SOURCE[0]}")
-    if [ -f "${DIR}/../bpphab-check-update" ]; then
-        . ${DIR}/../bpphab-check-update
-    fi
-    unset DIR
+    echo -n ${RST}
 
     exit 1
+fi
+
+# pre-commit exported an explicit dependency, so we add that to the prepared
+# commit template
+DEPENDS_ON_TMPFILE="$TMPDIR/bpphab_depends_on.$PGID"
+[[ -f $DEPENDS_ON_TMPFILE ]] && DEPENDS_ON=$(cat $DEPENDS_ON_TMPFILE)
+if [[ -n $DEPENDS_ON ]]; then
+    # sed is gross and i hate it
+    sed -i '' "/Test Plan:/i \\
+Depends on $DEPENDS_ON\\
+\\
+" "$1"
 fi

@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# `arc` will set the ARCANIST environment variable while it runs a command.
+#
+# $NOHOOK allows skipping of all hooks including prepare-commit-msg, which does
+# not support skipping via the --no-verify flag.
+if [[ -n $ARCANIST || -n $NOHOOK ]]; then
+    exit 0
+fi
+
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4)
+PURP=$(tput setaf 5)
+UL=$(tput smul)
+RST_UL=$(tput rmul)
+RST=$(tput sgr0)
+
+PGID=$(ps -o pgid= $$ | grep -o [0-9]*)
+
+check_updates() {
+  # Cowardly exit if no version info exists
+  LOCAL_VERSION_FILE="${DIR}/../bpphab_version"
+  if [[ ! -f $LOCAL_VERSION_FILE ]]; then
+    echo "ERROR: no BP Phab version file found at $LOCAL_VERSION_FILE"
+    exit 1
+  fi
+  local LOCAL_VERSION=$(cat $LOCAL_VERSION_FILE)
+
+  # Don't check for updates more than once
+  local check_updates_crumb="$TMPDIR/bpphab_check_updates.$PGID"
+  [[ -f $check_updates_crumb ]] && return || touch $check_updates_crumb
+
+  echo -n "${PURP}Checking for BP Phab Developer script updates... "
+
+  while read -r ref_hash ref_name; do
+    if [[ $ref_name == "refs/heads/master" ]]; then
+      local REMOTE_VERSION=$ref_hash
+      break;
+    fi
+  done < <(git ls-remote https://github.com/calblueprint/phabricator-setup)
+
+  if [[ -z $REMOTE_VERSION ]]; then
+    echo "Couldn't find version of remote (!?!?!?)"
+    exit 1
+  fi
+
+  if [[ $LOCAL_VERSION != $REMOTE_VERSION ]]; then
+    echo
+    read -p "${GREEN}A new version of BP Phab Developer scripts is available! Update? [Y/n] ${RST}" choice < /dev/tty
+    case "$choice" in
+      y|Y|'' )
+        python2.7 <(curl -sL https://raw.githubusercontent.com/calblueprint/phabricator-setup/master/bin/bp-phab-dev-setup.py) --update
+        echo
+        echo "${YELLOW}Please re-run your previous command. (Sorry for the inconvenience!)${RST}"
+        exit 1;;
+    esac
+  else
+    echo "${GREEN}Up to date.${RST}"
+  fi
+}
+check_updates
+
+echo -n "${RST}"

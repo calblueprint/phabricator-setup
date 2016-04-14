@@ -11,7 +11,12 @@ from StringIO import StringIO
 
 GITHUB_RAW_URL = 'https://raw.githubusercontent.com/calblueprint/phabricator-setup/master'
 
-UPDATER_URL = '%s/bin/bpphab-check-update' % GITHUB_RAW_URL
+BIN_SCRIPTS = {
+    'check-update': '%s/bin/bpphab-check-update',
+    'git-hooks-common': '%s/bin/bpphab-git-hooks-common',
+}
+for k, v in BIN_SCRIPTS.iteritems():
+    BIN_SCRIPTS[k] = v % GITHUB_RAW_URL
 
 GITHOOKS = {
     'pre-commit':         '%s/git-hooks/pre-commit',
@@ -100,6 +105,8 @@ def _curl_file_to_buf(file_url):
 def set_git_hooks(no_template):
     if no_template:
         del GITHOOKS['prepare-commit-msg']
+    _curl_file_to_dst(BIN_SCRIPTS['git-hooks-common'],
+                      '.git/bpphab-git-hooks-common', chmod=0o755)
     for name, url in GITHOOKS.iteritems():
         _curl_file_to_dst(url, '.git/hooks/'+name, chmod=0o755)
     _log_success('git hooks configured.')
@@ -173,7 +180,7 @@ def set_version_and_updater():
     master_ref = out[out.index('refs/heads/master') - 1]
     with open('.git/bpphab_version', 'wb') as f:
         f.write(master_ref)
-    _curl_file_to_dst(UPDATER_URL, '.git/bpphab-check-update', chmod=0o755)
+    _curl_file_to_dst(BIN_SCRIPTS['check-update'], '.git/bpphab-check-update', chmod=0o755)
 
 
 def _yn_query(question, default="yes"):
